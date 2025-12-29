@@ -132,7 +132,6 @@ with c2:
 if selected_label:
     target_song = df[df['search_label'] == selected_label].iloc[0]
     
-    # Affichage des infos du son choisi
     st.markdown(f"## 🎶 {target_song['track_name']}")
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Artiste", target_song['artists'])
@@ -141,4 +140,71 @@ if selected_label:
     col4.markdown(f"<br>", unsafe_allow_html=True)
     col4.link_button("▶️ Écouter sur Spotify", f"http://open.spotify.com/track/{target_song['track_id']}")
     
-    if target_song['explicit']: st.caption("⚠️ Ce titre
+    if target_song['explicit']: st.caption("⚠️ Ce titre contient des paroles explicites.")
+    st.markdown("---")
+
+    # LOGIQUE KNN & TWEAKS
+    target_genre = target_song['track_genre']
+    subset = df[df['track_genre'] == target_genre].copy()
+    if target_song['explicit']: subset = subset[subset['explicit'] == True]
+    if len(subset) < 10: subset = df[df['track_genre'] == target_genre].copy()
+    subset = subset.reset_index(drop=True)
+
+    feature_cols = ['danceability', 'energy', 'key', 'loudness', 'mode', 'speechiness', 'acousticness', 'instrumentalness', 'liveness', 'valence', 'tempo']
+    scaler = StandardScaler()
+    X_subset = scaler.fit_transform(subset[feature_cols])
+    
+    target_in_subset = subset[subset['track_id'] == target_song['track_id']]
+    
+    if not target_in_subset.empty:
+        target_idx = target_in_subset.index[0]
+        base_vector = X_subset[target_idx].copy()
+        base_vector[1] += tweak_energy
+        base_vector[10] += (tweak_tempo / 50)
+        target_vec = base_vector.reshape(1, -1)
+        
+        knn = NearestNeighbors(n_neighbors=7, algorithm='brute', metric='euclidean')
+        knn.fit(X_subset)
+        distances, indices = knn.kneighbors(target_vec)
+        
+        tab_recos, tab_3d = st.tabs(["🔥 Recommandations", "🌌 Visualisation 3D"])
+        
+        with tab_recos:
+            cols = st.columns(3)
+            for i in range(1, len(indices[0])):
+                idx = indices[0][i]
+                rec_song = subset.iloc[idx]
+                with cols[(i-1)%3]:
+                    with st.container(border=True):
+                        st.markdown(f"**{rec_song['track_name']}**")
+                        st.text(f"{rec_song['artists']}")
+                        delta_bpm = round(rec_song['tempo'] - target_song['tempo'])
+                        st.metric("BPM", round(rec_song['tempo']), delta=delta_bpm)
+                        st.markdown(f"[![Spotify](https://img.shields.io/badge/Spotify-Play-1DB954?style=flat&logo=spotify&logoColor=white)](http://open.spotify.com/track/{rec_song['track_id']})", unsafe_allow_html=True)
+                        with st.expander("Voir l'ADN audio"):
+                            radar = make_radar_chart(target_song, rec_song)
+                            st.plotly_chart(radar, use_container_width=True, key=f"radar_{i}")
+
+        with tab_3d:
+            st.info("💡 Fais tourner le cube avec ta souris pour voir les positions !")
+            chart_3d = create_3d_plot(subset, target_vec, indices)
+            st.plotly_chart(chart_3d, use_container_width=True, key="chart_3d")
+    else:
+        st.error("Erreur technique.")
+else:
+    st.info("👈 Utilise la barre latérale pour chercher un son !")
+
+# ==========================================
+# FOOTER
+# ==========================================
+st.markdown("---")
+st.markdown(
+    """
+    <div style='text-align: center; color: #808080; padding-top: 10px; padding-bottom: 20px;'>
+        <p>Conçu & Développé par <b>Alexandre Fiette</b></p>
+        <p style='font-size: 0.8em;'>© 2025 - Tous droits réservés | Données issues de Kaggle & Spotify API</p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
