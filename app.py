@@ -106,7 +106,7 @@ st.sidebar.info(
 )
 st.sidebar.markdown("---")
 
-search_term = st.sidebar.text_input("🔍 Rechercher un titre", placeholder="ex: Michael Jackson")
+search_term = st.sidebar.text_input("🔍 Rechercher un chanteur", placeholder="ex: Michael Jackson")
 filtered_df = df[df['search_label'].str.contains(search_term, case=False, na=False)].head(50) if search_term else pd.DataFrame()
 selected_label = st.sidebar.selectbox("Sélectionne le son", options=filtered_df['search_label'].unique()) if not filtered_df.empty else None
 
@@ -202,3 +202,4 @@ if selected_label:
         st.error("Erreur technique.")
 else:
     st.info("👈 Utilise la barre latérale pour chercher un son !")
+
