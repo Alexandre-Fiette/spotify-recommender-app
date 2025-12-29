@@ -119,7 +119,7 @@ with st.expander("ℹ️ Comment fonctionne cet algorithme ? (Cliquer pour compr
         Imaginez chaque chanson comme un point dans un espace en 3 dimensions.
         L'algorithme calcule la **Distance Euclidienne** entre ta chanson et toutes les autres pour trouver celles qui sont mathématiquement les plus proches.
         """)
-with c2:
+    with c2:
         st.markdown("### 📈 Le Vocabulaire Spotify")
         st.write("""
         - **Valence :** La "positivité" musicale (Triste 0.0 -> Joyeux 1.0).
@@ -143,7 +143,7 @@ if selected_label:
     if target_song['explicit']: st.caption("⚠️ Ce titre contient des paroles explicites.")
     st.markdown("---")
 
-    # LOGIQUE KNN & TWEAKS
+    # LOGIQUE KNN
     target_genre = target_song['track_genre']
     subset = df[df['track_genre'] == target_genre].copy()
     if target_song['explicit']: subset = subset[subset['explicit'] == True]
@@ -159,8 +159,6 @@ if selected_label:
     if not target_in_subset.empty:
         target_idx = target_in_subset.index[0]
         base_vector = X_subset[target_idx].copy()
-        base_vector[1] += tweak_energy
-        base_vector[10] += (tweak_tempo / 50)
         target_vec = base_vector.reshape(1, -1)
         
         knn = NearestNeighbors(n_neighbors=7, algorithm='brute', metric='euclidean')
@@ -207,4 +205,5 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
