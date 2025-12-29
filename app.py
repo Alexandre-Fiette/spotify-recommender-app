@@ -111,9 +111,6 @@ filtered_df = df[df['search_label'].str.contains(search_term, case=False, na=Fal
 selected_label = st.sidebar.selectbox("Sélectionne le son", options=filtered_df['search_label'].unique()) if not filtered_df.empty else None
 
 st.sidebar.markdown("---")
-st.sidebar.subheader("🎛️ Mood Tweaker")
-tweak_energy = st.sidebar.slider("⚡ Boost Énergie", -0.5, 0.5, 0.0, step=0.1)
-tweak_tempo = st.sidebar.slider("🥁 Boost Tempo", -30, 30, 0, step=5)
 
 # ==========================================
 # 5. PAGE PRINCIPALE & EXPLICATIONS
@@ -202,4 +199,5 @@ if selected_label:
         st.error("Erreur technique.")
 else:
     st.info("👈 Utilise la barre latérale pour chercher un son !")
+
 
